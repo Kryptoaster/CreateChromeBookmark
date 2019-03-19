@@ -1,0 +1,51 @@
+$Loggedon = (Get-WmiObject -Class Win32_ComputerSystem | Select-Object UserName).UserName
+$Domain, $User = $Loggedon.split('\', 2)
+$path = "$env:SystemDrive\Users\$User\Appdata\Local\Google\Chrome\User Data\Default\bookmarks"
+$Folder = "YourFolder"
+$TxtSoft = "$env:SystemDrive\$folder\bookmarks.txt"
+$BookSoft = "$env:SystemDrive\$folder\bookmarks"
+$NoBook = '"bookmark_bar": {
+         "children": \[  ]'
+$ExistBook = '"bookmark_bar": {
+         "children": \[ '
+
+$URL = '{
+            "date_added": "13180131416796466",
+            "id": "460",
+            "meta_info": {
+               "last_visited_desktop": "13180131416796557"
+            },
+            "name": "GARYTOWN ConfigMgr Blog – ConfigMgr, OSD, MDT, All the Fun Stuff",
+            "type": "url",
+            "url": "https://garytown.com/"
+         }'
+
+$NoURL = "`"bookmark_bar`": {
+         `"children`": [ $URL ]"
+$ExistURL = "`"bookmark_bar`": {
+         `"children`": [ $URL,"
+
+
+If (Test-Path ($TxtSoft))
+{
+	Remove-Item -Path $TxtSoft -Force
+}
+Get-content -Path $path -Raw | Set-Content -Path $TxtSoft
+
+if ((Get-Content -Path $TxtSoft -Raw) -match $NoBook)
+{
+	
+	(Get-Content -Path $TxtSoft -Raw) -replace $NoBook, $NoURL | Set-Content -Path $TxtSoft -Force
+}
+else
+{
+    (Get-Content -Path $TxtSoft -Raw) -replace $ExistBook, $ExistURL | Set-Content -Path $TxtSoft -Force
+}
+
+If (Test-Path -Path $BookSoft)
+{
+	Remove-Item -Path $BookSoft -Force
+}
+Rename-Item -Path $TxtSoft -NewName $BookSoft -Force
+Copy-Item -Path $BookSoft -Destination $path -Force | Out-Null
+Remove-Item -Path $BookSoft -Force
